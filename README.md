@@ -27,9 +27,17 @@ Développer un système permettant de déplacer automatiquement une caméra sur 
 
 ## Démarrage
 1. Installer l'OS sur le Raspberry Pi 5.
-2. Installer les dépendances Python via `pip install -r requirements.txt`.
-3. Vérifier les connexions du moteur et des capteurs.
-4. Lancer le serveur web avec `python src/web_app.py`.
+2. Installer les outils système nécessaires (Debian/DietPi) :
+   - `apt update`
+   - `apt install python3-venv python3-dev build-essential`
+3. Créer un environnement virtuel Python et l'activer :
+   - `python3 -m venv .venv`
+   - `source .venv/bin/activate`
+4. Installer les dépendances Python via `pip install -r requirements.txt`.
+   - Si `RPi.GPIO` échoue, essayez d'installer le paquet système : `apt install python3-rpi.gpio`
+5. Vérifier les connexions du moteur et des capteurs.
+6. Lancer le serveur web avec `python src/web_app.py`.
+7. Ouvrir un navigateur sur `http://<adresse-du-raspberry-pi>:5000/` pour accéder à la page de test.
 
 ## Améliorations futures
 - Programmation de trajectoires automatiques.

@@ -1,15 +1,12 @@
 """Application web minimale pour contrôler le rail de caméra."""
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template
 
 app = Flask(__name__)
 
 @app.route('/')
 def index():
-    return jsonify({
-        'message': 'Contrôle du rail caméra Raspberry Pi',
-        'status': 'ok'
-    })
+    return render_template('test.html')
 
 @app.route('/move', methods=['POST'])
 def move():

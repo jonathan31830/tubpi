@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Test de mouvement - Tubpi</title>
+    <style>
+      body { font-family: Arial, sans-serif; background: #f7f7f7; color: #222; margin: 0; padding: 20px; }
+      .container { max-width: 640px; margin: 0 auto; background: #fff; padding: 24px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+      h1 { margin-top: 0; }
+      .buttons { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin: 18px 0; }
+      button { padding: 16px; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; }
+      button.primary { background: #1f7ef1; color: #fff; }
+      button.secondary { background: #e0e0e0; color: #222; }
+      button.danger { background: #e14f4f; color: #fff; }
+      .status { margin-top: 18px; padding: 14px; background: #f3f8ff; border: 1px solid #d7e6ff; border-radius: 8px; }
+      .row { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+      label { min-width: 80px; }
+      input[type="range"] { flex: 1; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Page de test - Tubpi</h1>
+      <p>Utilisez les boutons pour envoyer des commandes de mouvement au rail.</p>
+
+      <div class="row">
+        <label for="speed">Vitesse :</label>
+        <input id="speed" type="range" min="10" max="100" value="50" />
+        <span id="speedValue">50</span>
+      </div>
+
+      <div class="buttons">
+        <button class="primary" onclick="sendMove('forward')">Avancer</button>
+        <button class="primary" onclick="sendMove('backward')">Reculer</button>
+        <button class="secondary" onclick="sendMove('stop')">Arrêter</button>
+        <button class="secondary" onclick="sendMove('calibrate')">Calibrer</button>
+      </div>
+
+      <div class="status">
+        <strong>Réponse :</strong>
+        <pre id="response">Aucune commande envoyée.</pre>
+      </div>
+    </div>
+
+    <script>
+      const speedInput = document.getElementById('speed');
+      const speedValue = document.getElementById('speedValue');
+      const responseBox = document.getElementById('response');
+
+      speedInput.addEventListener('input', () => {
+        speedValue.textContent = speedInput.value;
+      });
+
+      async function sendMove(direction) {
+        const speed = Number(speedInput.value);
+        try {
+          const res = await fetch('/move', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ direction, speed })
+          });
+
+          const result = await res.json();
+          if (!res.ok) {
+            responseBox.textContent = `Erreur ${res.status}: ${result.error || JSON.stringify(result)}`;
+            return;
+          }
+
+          responseBox.textContent = JSON.stringify(result, null, 2);
+        } catch (error) {
+          responseBox.textContent = `Erreur réseau : ${error.message}`;
+        }
+      }
+    </script>
+  </body>
+</html>
