@@ -2,15 +2,18 @@
 
 ## 1) Définir le besoin
 - Objectif principal : déplacer une caméra le long d’un rail automatiquement.
+- Utiliser le RaspberryPI comme passerelle de la caméra Onvif PTZ et intercepter les commandes focus+ focus- pour effectuer le deplacement de la camera 
 - Fonctions clés : contrôle de vitesse, positionnement précis, arrêt/retour, commande à distance ou via interface web.
 - Contraintes : compatibilité avec Raspberry Pi 5, alimentation, sécurité, stabilité du rail.
+- Langage de programmation : Python
 
 ## 2) Choisir le matériel
 - Raspberry Pi 5 ou 3b
 - Carte `RPI Motor Driver Board`
 - Moteur DC ou pas à pas adapté au système de rail
 - Capteurs de fin de course / capteurs de position (fortement recommandé)
-- Caméra compatible Raspberry Pi (par exemple `Raspberry Pi Camera Module`)
+- Caméra IP PTZ Onvif ( marque Dahua)
+- Carte extension port reseau pour le raspberryPI
 - Alimentation stable pour le Pi et le moteur
 - Châssis / rail, supports, courroie ou engrenage selon la mécanique
 
