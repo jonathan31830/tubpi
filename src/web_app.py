@@ -5,16 +5,22 @@ from motor_driver import MotorDriver
 
 app = Flask(__name__)
 
-try:
-    motor = MotorDriver()
-    if motor.is_available():
-        print('GPIO disponible : initialisation réussie.')
-    else:
-        print('GPIO non disponible : vérifiez que le programme est exécuté sur un Raspberry Pi avec accès aux GPIO.')
-        motor = None
-except Exception as exc:
-    print(f'GPIO non disponible: {exc}')
-    motor = None
+motor = None
+
+def init_motor():
+    global motor
+    if motor is None:
+        try:
+            motor = MotorDriver()
+            if motor.is_available():
+                print('GPIO disponible : initialisation réussie.')
+            else:
+                print('GPIO non disponible : vérifiez que le programme est exécuté sur un Raspberry Pi avec accès aux GPIO.')
+                motor = None
+        except Exception as exc:
+            print(f'GPIO non disponible: {exc}')
+            motor = None
+    return motor
 
 @app.route('/')
 def index():
@@ -22,9 +28,11 @@ def index():
 
 @app.before_request
 def check_motor_available():
-    print(f'check_motor_available: endpoint={request.endpoint}, motor={"available" if motor else "unavailable"}')
-    if request.endpoint == 'move' and motor is None:
-        return jsonify({'error': 'GPIO non disponible ou pas exécuté sur Raspberry Pi'}), 503
+    if request.endpoint == 'move':
+        init_motor()
+        print(f'check_motor_available: endpoint={request.endpoint}, motor={"available" if motor else "unavailable"}')
+        if motor is None:
+            return jsonify({'error': 'GPIO non disponible ou pas exécuté sur Raspberry Pi'}), 503
 
 @app.route('/move', methods=['POST'])
 def move():
