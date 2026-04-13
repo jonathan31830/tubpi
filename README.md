@@ -37,6 +37,8 @@ Développer un système permettant de déplacer automatiquement une caméra sur 
    - Si `RPi.GPIO` échoue, essayez d'installer le paquet système : `apt install python3-rpi.gpio`
 5. Vérifier les connexions du moteur et des capteurs.
 6. Lancer le serveur web avec `python src/web_app.py`.
+   - Si vous ne testez pas sur un Raspberry Pi ou si les GPIO ne sont pas disponibles, vous pouvez démarrer en mode simulation :
+     `SIMULATE_GPIO=1 python src/web_app.py`
 7. Ouvrir un navigateur sur `http://<adresse-du-raspberry-pi>:5000/` pour accéder à la page de test.
 
 ## Améliorations futures

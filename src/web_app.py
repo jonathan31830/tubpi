@@ -1,13 +1,17 @@
 """Application web minimale pour contrôler le rail de caméra."""
 
+import os
+
 from flask import Flask, jsonify, request, render_template
 from motor_driver import MotorDriver
 
 app = Flask(__name__)
 
+simulate_gpio = os.getenv('SIMULATE_GPIO', '0') == '1'
+
 try:
-    motor = MotorDriver(forward_pin=20, backward_pin=21, enable_pin=None)
-    if not motor.enabled:
+    motor = MotorDriver(forward_pin=20, backward_pin=21, enable_pin=None, simulate=simulate_gpio)
+    if not motor.is_available():
         motor = None
 except Exception:
     motor = None
@@ -30,6 +34,9 @@ def move():
     if direction not in ('forward', 'backward', 'stop', 'calibrate'):
         return jsonify({'error': 'direction invalide'}), 400
 
+    if motor is None:
+        return jsonify({'error': 'GPIO non disponible ou pas exécuté sur Raspberry Pi'}), 503
+
     try:
         if direction == 'forward':
             motor.move_forward(speed)
@@ -39,16 +46,18 @@ def move():
             motor.stop()
         elif direction == 'calibrate':
             result = motor.calibrate()
-            return jsonify({'direction': direction, 'result': result})
+            return jsonify({'direction': direction, 'result': result, 'simulation': motor.simulate})
     except Exception as exc:
         return jsonify({'error': str(exc)}), 500
 
-    return jsonify({'direction': direction, 'speed': speed})
+    return jsonify({'direction': direction, 'speed': speed, 'simulation': motor.simulate})
 
 @app.route('/shutdown', methods=['POST'])
 def shutdown():
+    if motor is None:
+        return jsonify({'message': 'Aucun GPIO à nettoyer'}), 200
     motor.cleanup()
-    return jsonify({'message': 'GPIO nettoyés, moteur arrêté'})
+    return jsonify({'message': 'GPIO nettoyés, moteur arrêté', 'simulation': motor.simulate})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
