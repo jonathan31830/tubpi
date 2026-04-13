@@ -1,5 +1,5 @@
 Flask>=2.3
 onvif-zeep>=0.1.14
 opencv-python>=4.8
-RPi.GPIO>=0.7.1
+rpi-lgpio>=1.0
 gpiozero>=1.7.0
