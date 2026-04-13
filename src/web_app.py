@@ -2,13 +2,15 @@
 
 from flask import Flask, jsonify, request, render_template
 from motor_driver import MotorDriver
+from camera_onvif import CameraOnvif
 
 app = Flask(__name__)
 
 motor = None
+camera = None
 
 def init_motor():
-    global motor
+    global motor, camera
     if motor is None:
         try:
             motor = MotorDriver()
@@ -20,6 +22,9 @@ def init_motor():
         except Exception as exc:
             print(f'GPIO non disponible: {exc}')
             motor = None
+
+    if camera is None:
+        camera = CameraOnvif(host='192.168.1.108', motor=motor)
     return motor
 
 @app.route('/')
@@ -40,7 +45,7 @@ def move():
     data = request.json or {}
     direction = data.get('direction')
 
-    if direction not in ('forward', 'backward', 'stop', 'calibrate'):
+    if direction not in ('forward', 'backward', 'stop', 'calibrate', 'focus_plus', 'focus_minus'):
         return jsonify({'error': 'direction invalide'}), 400
 
     if motor is None:
@@ -56,6 +61,12 @@ def move():
         elif direction == 'calibrate':
             result = motor.calibrate()
             return jsonify({'direction': direction, 'result': result})
+        elif direction == 'focus_plus':
+            result = camera.focus_plus()
+            return jsonify(result)
+        elif direction == 'focus_minus':
+            result = camera.focus_minus()
+            return jsonify(result)
     except Exception as exc:
         return jsonify({'error': str(exc)}), 500
 

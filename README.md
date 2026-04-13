@@ -43,6 +43,12 @@ Développer un système permettant de déplacer automatiquement une caméra sur 
 7. Lancer le serveur web avec `python src/web_app.py`.
 8. Ouvrir un navigateur sur `http://<adresse-du-raspberry-pi>:5000/` pour accéder à la page de test.
 
+## Passerelle ONVIF
+- Exécuter sur le Raspberry Pi : `sudo python src/onvif_gateway.py`
+- Le proxy écoute sur le port 80 et relaie les requêtes vers la caméra `192.168.1.108`.
+- Les commandes ONVIF `focus+` et `focus-` sont interceptées et pilotent le moteur du rail.
+- Les autres requêtes ONVIF sont envoyées normalement à la caméra.
+
 ## Améliorations futures
 - Programmation de trajectoires automatiques.
 - Suivi d'objet et mode automatique.
