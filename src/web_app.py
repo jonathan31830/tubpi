@@ -1,8 +1,11 @@
 """Application web minimale pour contrôler le rail de caméra."""
 
 from flask import Flask, jsonify, request, render_template
+from motor_driver import MotorDriver
 
 app = Flask(__name__)
+
+motor = MotorDriver(forward_pin=20, backward_pin=21, enable_pin=None)
 
 @app.route('/')
 def index():
@@ -17,8 +20,25 @@ def move():
     if direction not in ('forward', 'backward', 'stop', 'calibrate'):
         return jsonify({'error': 'direction invalide'}), 400
 
-    # TODO: appeler les méthodes du pilote moteur
+    try:
+        if direction == 'forward':
+            motor.move_forward(speed)
+        elif direction == 'backward':
+            motor.move_backward(speed)
+        elif direction == 'stop':
+            motor.stop()
+        elif direction == 'calibrate':
+            result = motor.calibrate()
+            return jsonify({'direction': direction, 'result': result})
+    except Exception as exc:
+        return jsonify({'error': str(exc)}), 500
+
     return jsonify({'direction': direction, 'speed': speed})
+
+@app.route('/shutdown', methods=['POST'])
+def shutdown():
+    motor.cleanup()
+    return jsonify({'message': 'GPIO nettoyés, moteur arrêté'})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

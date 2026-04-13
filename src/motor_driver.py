@@ -1,34 +1,56 @@
 """Pilote du moteur pour le déplacement de la caméra sur rail."""
 import RPi.GPIO as GPIO
 
-R1=20 # m1
-R2=21 # m2
-
-GPIO.setup(R1, GPIO.OUT)  
-GPIO.setup(R2, GPIO.OUT)
-
 class MotorDriver:
-    def __init__(self, enable_pin=None, forward_pin=None, backward_pin=None):
-        self.enable_pin = enable_pin
+    def __init__(self, forward_pin=20, backward_pin=21, enable_pin=None):
         self.forward_pin = forward_pin
         self.backward_pin = backward_pin
-        # TODO: initialiser les GPIO
+        self.enable_pin = enable_pin
+        self.pwm = None
+
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(self.forward_pin, GPIO.OUT)
+        GPIO.setup(self.backward_pin, GPIO.OUT)
+
+        if self.enable_pin is not None:
+            GPIO.setup(self.enable_pin, GPIO.OUT)
+            self.pwm = GPIO.PWM(self.enable_pin, 1000)
+            self.pwm.start(0)
+
+        self.stop()
+
+    def _set_speed(self, speed):
+        if self.pwm is not None:
+            duty_cycle = max(0, min(100, int(speed)))
+            self.pwm.ChangeDutyCycle(duty_cycle)
 
     def move_forward(self, speed=50):
         """Démarrer le déplacement vers l'avant."""
-        GPIO.output(L1, GPIO.HIGH)
-        GPIO.output(L2, GPIO.LOW)
+        GPIO.output(self.forward_pin, GPIO.HIGH)
+        GPIO.output(self.backward_pin, GPIO.LOW)
+        self._set_speed(speed)
 
     def move_backward(self, speed=50):
         """Démarrer le déplacement vers l'arrière."""
-        GPIO.output(L1, GPIO.LOW)
-        GPIO.output(L2, GPIO.HIGH)
+        GPIO.output(self.forward_pin, GPIO.LOW)
+        GPIO.output(self.backward_pin, GPIO.HIGH)
+        self._set_speed(speed)
 
     def stop(self):
         """Arrêter le moteur."""
-        GPIO.output(L1, GPIO.LOW)
-        GPIO.output(L2, GPIO.LOW)
+        GPIO.output(self.forward_pin, GPIO.LOW)
+        GPIO.output(self.backward_pin, GPIO.LOW)
+        if self.pwm is not None:
+            self.pwm.ChangeDutyCycle(0)
 
     def calibrate(self):
         """Calibrer la position de référence du rail."""
-        raise NotImplementedError
+        self.stop()
+        return {'message': 'calibration automatique non implémentée'}
+
+    def cleanup(self):
+        """Libérer les GPIO."""
+        self.stop()
+        if self.pwm is not None:
+            self.pwm.stop()
+        GPIO.cleanup()
