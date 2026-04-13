@@ -10,6 +10,7 @@ class MotorDriver:
         self.enabled = False
 
         try:
+            GPIO.cleanup()
             GPIO.setmode(GPIO.BCM)
             GPIO.setup(self.forward_pin, GPIO.OUT)
             GPIO.setup(self.backward_pin, GPIO.OUT)
