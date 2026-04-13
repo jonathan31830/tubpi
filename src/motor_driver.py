@@ -10,7 +10,6 @@ class MotorDriver:
         self.enabled = False
 
         try:
-            GPIO.cleanup()
             GPIO.setmode(GPIO.BCM)
             GPIO.setup(self.forward_pin, GPIO.OUT)
             GPIO.setup(self.backward_pin, GPIO.OUT)
@@ -60,3 +59,16 @@ class MotorDriver:
 
     def is_available(self):
         return self.enabled
+
+    def check_gpio(self):
+        """Vérifie si les GPIO ont été initialisés correctement."""
+        return self.is_available()
+
+
+if __name__ == '__main__':
+    driver = MotorDriver()
+    if driver.is_available():
+        print('GPIO disponible : initialisation réussie.')
+        driver.cleanup()
+    else:
+        print('GPIO non disponible : vérifiez que le programme est exécuté sur un Raspberry Pi avec accès aux GPIO.')
