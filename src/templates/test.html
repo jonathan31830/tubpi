@@ -24,12 +24,6 @@
       <h1>Page de test - Tubpi</h1>
       <p>Utilisez les boutons pour envoyer des commandes de mouvement au rail.</p>
 
-      <div class="row">
-        <label for="speed">Vitesse :</label>
-        <input id="speed" type="range" min="10" max="100" value="50" />
-        <span id="speedValue">50</span>
-      </div>
-
       <div class="buttons">
         <button class="primary" onclick="sendMove('forward')">Avancer</button>
         <button class="primary" onclick="sendMove('backward')">Reculer</button>
@@ -44,21 +38,14 @@
     </div>
 
     <script>
-      const speedInput = document.getElementById('speed');
-      const speedValue = document.getElementById('speedValue');
       const responseBox = document.getElementById('response');
 
-      speedInput.addEventListener('input', () => {
-        speedValue.textContent = speedInput.value;
-      });
-
       async function sendMove(direction) {
-        const speed = Number(speedInput.value);
         try {
           const res = await fetch('/move', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ direction, speed })
+            body: JSON.stringify({ direction })
           });
 
           const result = await res.json();

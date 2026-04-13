@@ -1,7 +1,5 @@
 """Application web minimale pour contrôler le rail de caméra."""
 
-import os
-
 from flask import Flask, jsonify, request, render_template
 from motor_driver import MotorDriver
 
@@ -9,7 +7,7 @@ app = Flask(__name__)
 
 try:
     motor = MotorDriver(forward_pin=20, backward_pin=21)
-    print(f'init motor: motor={"available" if motor else "unavailable"}')
+    print(f'init motor: motor={"available" if motor and motor.is_available() else "unavailable"}')
     if not motor.is_available():
         motor = None
 except Exception as exc:
@@ -31,7 +29,6 @@ def move():
     print('move')
     data = request.json or {}
     direction = data.get('direction')
-    speed = data.get('speed', 50)
 
     if direction not in ('forward', 'backward', 'stop', 'calibrate'):
         return jsonify({'error': 'direction invalide'}), 400
@@ -48,18 +45,18 @@ def move():
             motor.stop()
         elif direction == 'calibrate':
             result = motor.calibrate()
-            return jsonify({'direction': direction, 'result': result, 'simulation': motor.simulate})
+            return jsonify({'direction': direction, 'result': result})
     except Exception as exc:
         return jsonify({'error': str(exc)}), 500
 
-    return jsonify({'direction': direction, 'speed': speed, 'simulation': motor.simulate})
+    return jsonify({'direction': direction})
 
 @app.route('/shutdown', methods=['POST'])
 def shutdown():
     if motor is None:
         return jsonify({'message': 'Aucun GPIO à nettoyer'}), 200
     motor.cleanup()
-    return jsonify({'message': 'GPIO nettoyés, moteur arrêté', 'simulation': motor.simulate})
+    return jsonify({'message': 'GPIO nettoyés, moteur arrêté'})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

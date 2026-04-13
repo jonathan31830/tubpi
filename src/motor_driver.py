@@ -22,7 +22,7 @@ class MotorDriver:
 
     def move_forward(self):
         """Démarrer le déplacement vers l'avant."""
-        if not self.enabled and not self.simulate:
+        if not self.enabled:
             raise RuntimeError('GPIO non disponible')
 
         GPIO.output(self.forward_pin, GPIO.HIGH)
@@ -30,7 +30,7 @@ class MotorDriver:
 
     def move_backward(self):
         """Démarrer le déplacement vers l'arrière."""
-        if not self.enabled and not self.simulate:
+        if not self.enabled:
             raise RuntimeError('GPIO non disponible')
 
         GPIO.output(self.forward_pin, GPIO.LOW)
@@ -43,7 +43,6 @@ class MotorDriver:
 
         GPIO.output(self.forward_pin, GPIO.LOW)
         GPIO.output(self.backward_pin, GPIO.LOW)
-
 
     def calibrate(self):
         """Calibrer la position de référence du rail."""
