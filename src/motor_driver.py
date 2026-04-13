@@ -9,12 +9,16 @@ class MotorDriver:
         print('Initialiser les GPIO')
         self.forward_pin = forward_pin
         self.backward_pin = backward_pin
+        self.pwm=26
         self.enabled = False
 
         try:
             GPIO.setmode(GPIO.BCM)
             GPIO.setup(self.forward_pin, GPIO.OUT)
             GPIO.setup(self.backward_pin, GPIO.OUT)
+            GPIO.setup(self.pwm, GPIO.OUT)
+            GPIO.output(self.pwm,GPIO.HIGH)
+
 
             self.stop()
             self.enabled = True
