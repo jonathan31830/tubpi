@@ -34,6 +34,7 @@ iptables -D FORWARD -i eth0 -o eth1 -s 192.168.11.0/24 -d 192.168.1.0/24 -j ACCE
 iptables -D FORWARD -i eth1 -o eth0 -m state --state RELATED,ESTABLISHED -j ACCEPT 2>/dev/null || true
 iptables -t nat -D PREROUTING -d ${ETH0_ADDR} -p tcp --dport 554 -j DNAT --to-destination ${CAMERA_ADDR}:554 2>/dev/null || true
 iptables -t nat -D PREROUTING -d ${ETH0_ADDR} -p udp --dport 554 -j DNAT --to-destination ${CAMERA_ADDR}:554 2>/dev/null || true
+iptables -t nat -D PREROUTING -d ${ETH0_ADDR} -p tcp --dport 81 -j DNAT --to-destination ${CAMERA_ADDR}:80 2>/dev/null || true
 iptables -t nat -D POSTROUTING -s 192.168.11.0/24 -d 192.168.1.0/24 -j MASQUERADE 2>/dev/null || true
 
 echo "Ajout des règles de routage NAT..."
@@ -41,14 +42,16 @@ iptables -A FORWARD -i eth0 -o eth1 -s 192.168.11.0/24 -d 192.168.1.0/24 -j ACCE
 iptables -A FORWARD -i eth1 -o eth0 -m state --state RELATED,ESTABLISHED -j ACCEPT
 iptables -t nat -A PREROUTING -d ${ETH0_ADDR} -p tcp --dport 554 -j DNAT --to-destination ${CAMERA_ADDR}:554
 iptables -t nat -A PREROUTING -d ${ETH0_ADDR} -p udp --dport 554 -j DNAT --to-destination ${CAMERA_ADDR}:554
+iptables -t nat -A PREROUTING -d ${ETH0_ADDR} -p tcp --dport 81 -j DNAT --to-destination ${CAMERA_ADDR}:80
 iptables -t nat -A POSTROUTING -s 192.168.11.0/24 -d 192.168.1.0/24 -j MASQUERADE
 
 cat <<EOF
 Passerelle configurée.
 
 Accès de la caméra via le RPi :
-- HTTP/ONVIF : http://${ETH0_ADDR}/
-- RTSP : rtsp://${ETH0_ADDR}:554/
+- HTTP/ONVIF (proxy)  : http://${ETH0_ADDR}/
+- HTTP direct caméra  : http://${ETH0_ADDR}:81/
+- RTSP               : rtsp://${ETH0_ADDR}:554/
 
 Si votre caméra utilise d'autres ports, ajoutez-les en adaptant ce script.
 EOF
