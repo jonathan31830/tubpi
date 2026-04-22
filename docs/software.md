@@ -21,9 +21,11 @@
 
 ### Configuration
 Les capteurs de fin de course sont configurés automatiquement lors de l'initialisation de `MotorDriver` :
-- GPIO 23 : capteur de fin de course arrière (backward)
-- GPIO 24 : capteur de fin de course avant (forward)
+- GPIO 23 : capteur de fin de course avant (forward) - capteur devant, déclenché en premier lors du mouvement vers l'avant
+- GPIO 24 : capteur de fin de course arrière (backward) - capteur reculé, déclenché en premier lors du mouvement vers l'arrière
 - Pull-up interne activé : HIGH = libre, LOW = déclenché
+
+**Note :** Les deux capteurs sont montés sur le même PCB devant la caméra (côté droit), décalés de 2cm, permettant une détection séquentielle en fin de course.
 
 ### Fonctionnement
 Le système vérifie l'état des capteurs :

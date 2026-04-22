@@ -17,6 +17,8 @@ class MotorDriver:
         self.forward_pin = forward_pin
         self.backward_pin = backward_pin
         self._pwm_pin = pwm_pin
+        # GPIO 23 : capteur devant (forward) - se déclenche en premier lors du mouvement vers l'avant
+        # GPIO 24 : capteur reculé (backward) - se déclenche en premier lors du mouvement vers l'arrière
         self.limit_forward_pin = limit_forward_pin
         self.limit_backward_pin = limit_backward_pin
         self._pwm = None

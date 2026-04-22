@@ -50,10 +50,11 @@ Développer un système permettant de déplacer automatiquement une caméra sur 
 Le système intègre des capteurs optoélectroniques (phototransistors) pour détecter les fins de course :
 
 ### Configuration matérielle
-- **GPIO 23** : capteur de fin de course arrière (backward) - position de référence
-- **GPIO 24** : capteur de fin de course avant (forward)
+- **GPIO 23** : capteur de fin de course avant (forward) - capteur devant
+- **GPIO 24** : capteur de fin de course arrière (backward) - capteur reculé, position de référence
 - Type : phototransistors avec LED infrarouge
 - Logique : HIGH = libre, LOW = déclenché (faisceau coupé)
+- **Montage physique** : les deux capteurs sont fixés devant la caméra sur le côté droit, décalés de 2cm sur le même PCB (montés en opposition). Lors d'une fin de course, le premier capteur se déclenche puis le deuxième.
 
 ### Fonctionnalités de sécurité
 - **Arrêt automatique** : le moteur s'arrête dès qu'un capteur est déclenché
