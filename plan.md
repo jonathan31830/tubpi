@@ -33,8 +33,7 @@
 - Connecter le driver moteur au Raspberry Pi
 - Vérifier les broches utilisées (GPIO, PWM, alimentation)
 - Tester un mouvement de base : sens avant/arrière, marche/arrêt
-- Ajouter des capteurs de fin de course pour prévenir les débordements
-
+- Ajouter des capteurs de fin de course pour prévenir les débordements- Intégrer l'encodeur de position avec Level Shifter (5V → 3.3V) pour mesurer les déplacements
 ## 5) Développer le logiciel
 - Installer l’OS et les dépendances sur le Raspberry Pi 5
 - Écrire un pilote de base pour la carte motor driver
@@ -42,18 +41,23 @@
   - `move_forward(distance/vitesse)`
   - `move_backward(...)`
   - `stop()`
-  - `home()` ou `calibrate()`
-- Implémenter la capture vidéo de la caméra
+  - `home()` ou `calibrate()`- Intégrer l'encodeur de position :
+  - Suivi de la position actuelle (en mm)
+  - Mesure de la distance parcourue (session et totale)
+  - Calibration mécanique (conversion impulsions → mm)
+  - API pour accéder aux statistiques de position- Implémenter la capture vidéo de la caméra
 - Ajouter l’interface utilisateur (web ou console)
 
 ## 6) Tester et itérer
 - Tester chaque élément séparément :
   - commande moteur
-  - lecture des capteurs
+  - lecture des capteurs de fin de course
+  - suivi de position par encodeur
   - flux caméra
 - Tester le système intégré sur le rail
 - Ajuster la vitesse, les accélérations, la précision
-- Valider la sécurité et les arrêts d’urgence
+- Valider la sécurité et les arrêts d'urgence
+- Calibrer la conversion impulsions → distance (mm)
 
 ## 7) Finaliser et documenter
 - Documenter l’assemblage matériel

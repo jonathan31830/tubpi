@@ -10,9 +10,15 @@ class MotorDriver:
     PWM_FREQ = 1000        # Hz
     RAMP_STEPS = 20        # number of steps 0 → 100 %
     RAMP_STEP_DELAY = 0.02 # seconds between steps (~0.4 s total ramp time)
+    
+    # Encoder configuration
+    # Distance par impulsion (en mm) - à ajuster selon votre système mécanique
+    # Formule : (circonférence de la poulie en mm) / (impulsions par tour de l'encodeur)
+    MM_PER_PULSE = 0.1  # Valeur par défaut, à calibrer
 
     def __init__(self, forward_pin=20, backward_pin=21, pwm_pin=26, 
-                 limit_forward_pin=23, limit_backward_pin=24):
+                 limit_forward_pin=23, limit_backward_pin=24,
+                 encoder_a_pin=17, encoder_b_pin=27, encoder_index_pin=22):
         print("Initialiser les GPIO")
         self.forward_pin = forward_pin
         self.backward_pin = backward_pin
@@ -21,6 +27,20 @@ class MotorDriver:
         # GPIO 24 : capteur reculé (backward) - se déclenche en premier lors du mouvement vers l'arrière
         self.limit_forward_pin = limit_forward_pin
         self.limit_backward_pin = limit_backward_pin
+        
+        # Encodeur de position
+        self.encoder_a_pin = encoder_a_pin
+        self.encoder_b_pin = encoder_b_pin
+        self.encoder_index_pin = encoder_index_pin
+        
+        # Variables de suivi de position
+        self._encoder_position = 0      # Position actuelle en impulsions (peut être négatif)
+        self._encoder_total_pulses = 0  # Distance totale parcourue en impulsions (toujours positif)
+        self._encoder_session_pulses = 0  # Distance depuis le démarrage
+        self._encoder_last_a = 0
+        self._encoder_last_b = 0
+        self._encoder_lock = threading.Lock()
+        
         self._pwm = None
         self._duty = 0          # current duty cycle (0-100)
         self._current_fwd = False   # current forward pin state
@@ -39,6 +59,20 @@ class MotorDriver:
             # Pull-up interne : HIGH quand libre, LOW quand déclenché
             GPIO.setup(self.limit_forward_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
             GPIO.setup(self.limit_backward_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+            
+            # Configuration de l'encodeur
+            # Les signaux viennent du Level Shifter (5V -> 3.3V)
+            GPIO.setup(self.encoder_a_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+            GPIO.setup(self.encoder_b_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+            GPIO.setup(self.encoder_index_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+            
+            # Lire l'état initial de l'encodeur
+            self._encoder_last_a = GPIO.input(self.encoder_a_pin)
+            self._encoder_last_b = GPIO.input(self.encoder_b_pin)
+            
+            # Configurer les interruptions sur les canaux A et B (détection de front)
+            GPIO.add_event_detect(self.encoder_a_pin, GPIO.BOTH, callback=self._encoder_callback)
+            GPIO.add_event_detect(self.encoder_b_pin, GPIO.BOTH, callback=self._encoder_callback)
 
             self._pwm = GPIO.PWM(self._pwm_pin, self.PWM_FREQ)
             self._pwm.start(0)
@@ -55,6 +89,42 @@ class MotorDriver:
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
+
+    def _encoder_callback(self, channel):
+        """
+        Callback pour les interruptions de l'encodeur en quadrature.
+        Détermine la direction et met à jour les compteurs.
+        """
+        with self._encoder_lock:
+            # Lire l'état actuel des deux canaux
+            a = GPIO.input(self.encoder_a_pin)
+            b = GPIO.input(self.encoder_b_pin)
+            
+            # Déterminer la direction en comparant l'état actuel avec le précédent
+            # Encodeur en quadrature : quand A change, si B=0 on avance, si B=1 on recule
+            # Quand B change, si A=1 on avance, si A=0 on recule
+            if channel == self.encoder_a_pin and a != self._encoder_last_a:
+                if a == b:
+                    # Rotation inverse (backward)
+                    self._encoder_position -= 1
+                else:
+                    # Rotation avant (forward)
+                    self._encoder_position += 1
+                self._encoder_total_pulses += 1
+                self._encoder_session_pulses += 1
+            elif channel == self.encoder_b_pin and b != self._encoder_last_b:
+                if a == b:
+                    # Rotation avant (forward)
+                    self._encoder_position += 1
+                else:
+                    # Rotation inverse (backward)
+                    self._encoder_position -= 1
+                self._encoder_total_pulses += 1
+                self._encoder_session_pulses += 1
+            
+            # Mettre à jour l'état précédent
+            self._encoder_last_a = a
+            self._encoder_last_b = b
 
     def _is_limit_forward_triggered(self):
         """Vérifie si le capteur de fin de course avant est déclenché."""
@@ -191,6 +261,9 @@ class MotorDriver:
         
         if self._is_limit_backward_triggered():
             print("Calibration terminée - position de référence atteinte")
+            # Réinitialiser la position de l'encodeur à la position de référence
+            self.reset_encoder_position()
+            print("Position de l'encodeur réinitialisée à zéro")
             return {'success': True, 'message': 'Position de référence atteinte'}
         else:
             print("Calibration échouée - timeout")
@@ -231,6 +304,80 @@ class MotorDriver:
     def can_move_backward(self):
         """Vérifie si le mouvement vers l'arrière est possible."""
         return self.enabled and not self._is_limit_backward_triggered()
+
+    # ------------------------------------------------------------------
+    # Encoder / Position tracking methods
+    # ------------------------------------------------------------------
+
+    def get_encoder_position(self):
+        """
+        Retourne la position actuelle de l'encodeur en impulsions.
+        Valeur positive = déplacement vers l'avant, négative = vers l'arrière.
+        """
+        with self._encoder_lock:
+            return self._encoder_position
+
+    def get_encoder_distance(self):
+        """
+        Retourne la distance actuelle depuis la position de référence (en mm).
+        """
+        position = self.get_encoder_position()
+        return position * self.MM_PER_PULSE
+
+    def get_total_distance_traveled(self):
+        """
+        Retourne la distance totale parcourue depuis le démarrage (en mm).
+        Cette valeur est toujours positive et cumulative.
+        """
+        with self._encoder_lock:
+            return self._encoder_total_pulses * self.MM_PER_PULSE
+
+    def get_session_distance_traveled(self):
+        """
+        Retourne la distance parcourue depuis le démarrage de la session (en mm).
+        """
+        with self._encoder_lock:
+            return self._encoder_session_pulses * self.MM_PER_PULSE
+
+    def reset_encoder_position(self):
+        """
+        Réinitialise la position de l'encodeur à zéro (position de référence).
+        Ne réinitialise pas les compteurs de distance totale et de session.
+        """
+        with self._encoder_lock:
+            self._encoder_position = 0
+
+    def reset_session_distance(self):
+        """
+        Réinitialise le compteur de distance de la session.
+        """
+        with self._encoder_lock:
+            self._encoder_session_pulses = 0
+
+    def get_encoder_stats(self):
+        """
+        Retourne un dictionnaire avec toutes les statistiques de l'encodeur.
+        """
+        with self._encoder_lock:
+            return {
+                'position_pulses': self._encoder_position,
+                'position_mm': self._encoder_position * self.MM_PER_PULSE,
+                'total_distance_mm': self._encoder_total_pulses * self.MM_PER_PULSE,
+                'session_distance_mm': self._encoder_session_pulses * self.MM_PER_PULSE,
+                'total_pulses': self._encoder_total_pulses,
+                'session_pulses': self._encoder_session_pulses,
+                'mm_per_pulse': self.MM_PER_PULSE
+            }
+
+    def set_mm_per_pulse(self, mm_per_pulse):
+        """
+        Configure la distance par impulsion (calibration mécanique).
+        À calculer selon : (circonférence de la poulie en mm) / (impulsions par tour)
+        """
+        if mm_per_pulse > 0:
+            self.MM_PER_PULSE = mm_per_pulse
+            return True
+        return False
 
     def run_test_sequence(self):
         """Exécute un test moteur : gauche 10s, droite 10s, arrêt."""

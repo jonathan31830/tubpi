@@ -42,6 +42,8 @@ Développer un système permettant de déplacer automatiquement une caméra sur 
      `python src/motor_driver.py test`
    - Pour tester les capteurs de fin de course :
      `python src/test_limit_switches.py`
+   - Pour tester l'encodeur de position :
+     `python src/test_encoder.py`
 7. Lancer le serveur web avec `python src/web_app.py`.
 8. Ouvrir un navigateur sur `http://<adresse-du-raspberry-pi>:5000/` pour accéder à la page de test.
 
@@ -71,6 +73,47 @@ curl http://localhost:5000/status
 ```
 
 Pour plus de détails, consultez [docs/hardware.md](docs/hardware.md) et [docs/software.md](docs/software.md).
+
+## Encodeur de position
+
+Le système intègre un encodeur HEDS en quadrature pour mesurer précisément la position et les distances parcourues :
+
+### Configuration matérielle
+- **GPIO 17** : Canal A de l'encodeur (via Level Shifter 5V → 3.3V)
+- **GPIO 27** : Canal B de l'encodeur (via Level Shifter 5V → 3.3V)
+- **GPIO 22** : Signal Index (via Level Shifter 5V → 3.3V)
+- Type : Encodeur HEDS en quadrature
+- **Protection obligatoire** : Level Shifter pour convertir les signaux 5V de l'encodeur en 3.3V pour le Raspberry Pi
+
+### Mesures disponibles
+Le système suit trois types de données :
+1. **Position actuelle** : position relative depuis la dernière calibration (en mm, peut être négative)
+2. **Distance de session** : distance totale parcourue depuis le démarrage (en mm, toujours positive)
+3. **Distance totale** : distance cumulative sur toute la durée de vie (en mm, toujours positive)
+
+### Calibration mécanique
+La conversion impulsions → millimètres dépend de votre configuration :
+```
+MM_PER_PULSE = (Circonférence_poulie_mm) / (Impulsions_par_tour_encodeur)
+```
+Exemple : poulie Ø30mm avec encodeur 100 imp/tour → `MM_PER_PULSE = 0.9425 mm`
+
+### Tests et API
+```bash
+# Test interactif de l'encodeur
+python src/test_encoder.py
+
+# Statistiques via l'API web
+curl http://localhost:5000/encoder
+
+# État complet (capteurs + encodeur)
+curl http://localhost:5000/status
+
+# Réinitialiser la position
+curl -X POST http://localhost:5000/encoder/reset
+```
+
+Pour plus de détails sur la calibration et l'API, consultez [docs/software.md](docs/software.md).
 
 ## Passerelle ONVIF
 - Exécuter sur le Raspberry Pi : `sudo python src/onvif_gateway.py`

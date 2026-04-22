@@ -29,14 +29,14 @@ def test_limit_switches():
         print()
         
         # Test 2 : Surveillance continue
-        print("--- Test 2 : Surveillance continue (10 secondes) ---")
+        print("--- Test 2 : Surveillance continue (60 secondes) ---")
         print("Déclenchez les capteurs pour voir le changement d'état...")
         print("Appuyez sur Ctrl+C pour arrêter\n")
         
         start_time = time.time()
         last_status = {'forward': None, 'backward': None}
         
-        while (time.time() - start_time) < 10:
+        while (time.time() - start_time) < 60:
             current_status = driver.get_limit_switches_status()
             
             # Afficher seulement si l'état change
