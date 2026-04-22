@@ -35,6 +35,16 @@ M1	M2	M3	M4	Descriptions
 
 ## Capteurs
 - Capteurs de fin de course pour chaque extrémité du rail
+
+### Configuration physique
+Les deux capteurs sont fixés devant la caméra sur le côté droit, décalés l'un de l'autre de 2cm, sur le même PCB mais un côté face l'autre côté pile.
+
+**Fonctionnement :**
+- Quand la navette arrive au bout dans un sens, le premier capteur s'enclenche puis le deuxième
+- Dans l'autre sens, c'est l'inverse
+- **GPIO 23** est le capteur **devant** (forward) - se déclenche en premier lors du mouvement vers l'avant
+- **GPIO 24** est le capteur **reculé** (backward) - se déclenche en premier lors du mouvement vers l'arrière
+
 ### Schéma de connexion
 Comme vous avez deux capteurs, vous allez devoir doubler le câblage sur votre Mini Base
 
@@ -43,9 +53,9 @@ LED 1 (Haut)        A (Anode)           3.3V (via résistance 220 Ohm)
                     K (Cathode)         GND
 LED 1 (Bas)         A (Anode)           3.3V (via résistance 220 Ohm)
                     K (Cathode)         GND
-Phototransistor 1   C (Collecteur)     GPIO 23 (capteur arrière/backward)
+Phototransistor 1   C (Collecteur)     GPIO 23 (capteur avant/forward - devant)
                     E (Émetteur)        GND
-Phototransistor 2   C (Collecteur)     GPIO 24 (capteur avant/forward)
+Phototransistor 2   C (Collecteur)     GPIO 24 (capteur arrière/backward - reculé)
                     E (Émetteur)        GND
 
 ### Fonctionnement
