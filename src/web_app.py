@@ -86,11 +86,49 @@ def status():
     
     try:
         limit_status = motor.get_limit_switches_status()
+        encoder_stats = motor.get_encoder_stats()
         return jsonify({
             'available': True,
             'limit_switches': limit_status,
             'can_move_forward': motor.can_move_forward(),
-            'can_move_backward': motor.can_move_backward()
+            'can_move_backward': motor.can_move_backward(),
+            'encoder': encoder_stats
+        })
+    except Exception as exc:
+        return jsonify({'error': str(exc)}), 500
+
+@app.route('/encoder', methods=['GET'])
+def encoder_info():
+    """Retourne les informations détaillées de l'encodeur."""
+    if motor is None:
+        init_motor()
+    
+    if motor is None:
+        return jsonify({
+            'available': False,
+            'message': 'GPIO non disponible'
+        }), 503
+    
+    try:
+        return jsonify(motor.get_encoder_stats())
+    except Exception as exc:
+        return jsonify({'error': str(exc)}), 500
+
+@app.route('/encoder/reset', methods=['POST'])
+def encoder_reset():
+    """Réinitialise la position de l'encodeur."""
+    if motor is None:
+        init_motor()
+    
+    if motor is None:
+        return jsonify({'error': 'GPIO non disponible'}), 503
+    
+    try:
+        motor.reset_encoder_position()
+        return jsonify({
+            'success': True,
+            'message': 'Position réinitialisée',
+            'position': motor.get_encoder_position()
         })
     except Exception as exc:
         return jsonify({'error': str(exc)}), 500

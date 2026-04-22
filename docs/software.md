@@ -73,3 +73,130 @@ Pour vérifier l'état via l'API web :
 ```bash
 curl http://localhost:5000/status
 ```
+
+## Gestion de l'encodeur de position
+
+### Configuration
+L'encodeur HEDS en quadrature est configuré automatiquement lors de l'initialisation de `MotorDriver` :
+- GPIO 17 : Canal A de l'encodeur
+- GPIO 27 : Canal B de l'encodeur
+- GPIO 22 : Signal Index (non utilisé actuellement)
+- Détection par interruptions sur les deux canaux pour un suivi précis en temps réel
+
+### Mesures de position et distance
+
+Le système maintient trois compteurs indépendants :
+
+1. **Position actuelle** (`position_pulses`, `position_mm`)
+   - Position relative depuis la dernière calibration
+   - Peut être négative (si on recule par rapport à la référence)
+   - Réinitialisée à zéro lors de la calibration
+
+2. **Distance de session** (`session_distance_mm`, `session_pulses`)
+   - Distance totale parcourue depuis le démarrage
+   - Toujours positive (cumul des mouvements avant et arrière)
+   - Réinitialisable manuellement
+
+3. **Distance totale** (`total_distance_mm`, `total_pulses`)
+   - Distance cumulative sur toute la durée de vie du système
+   - Toujours positive
+   - Conservée même après redémarrage (si persistée)
+
+### Calibration mécanique
+
+La conversion impulsions → millimètres dépend de votre configuration mécanique :
+
+```python
+# Formule de calcul
+MM_PER_PULSE = (Circonférence_poulie_mm) / (Impulsions_par_tour_encodeur)
+
+# Exemple : poulie Ø30mm avec encodeur 100 impulsions/tour
+MM_PER_PULSE = (π × 30) / 100 = 0.9425 mm/impulsion
+
+# Configuration dans le code
+driver.set_mm_per_pulse(0.9425)
+```
+
+### API disponibles
+
+#### Méthodes publiques
+```python
+# Obtenir la position actuelle
+position_pulses = motor.get_encoder_position()  # en impulsions
+position_mm = motor.get_encoder_distance()      # en millimètres
+
+# Obtenir les distances parcourues
+total_mm = motor.get_total_distance_traveled()    # distance totale
+session_mm = motor.get_session_distance_traveled()  # distance de session
+
+# Obtenir toutes les statistiques
+stats = motor.get_encoder_stats()
+# Retourne: {
+#   'position_pulses': int,
+#   'position_mm': float,
+#   'total_distance_mm': float,
+#   'session_distance_mm': float,
+#   'total_pulses': int,
+#   'session_pulses': int,
+#   'mm_per_pulse': float
+# }
+
+# Réinitialiser la position
+motor.reset_encoder_position()  # Position → 0
+
+# Réinitialiser le compteur de session
+motor.reset_session_distance()
+
+# Configurer la calibration mécanique
+motor.set_mm_per_pulse(0.9425)
+```
+
+#### Endpoints web
+```bash
+# Obtenir les statistiques complètes (inclut encodeur)
+GET /status
+# Retourne: {
+#   'available': bool,
+#   'limit_switches': {...},
+#   'can_move_forward': bool,
+#   'can_move_backward': bool,
+#   'encoder': {
+#     'position_pulses': int,
+#     'position_mm': float,
+#     'total_distance_mm': float,
+#     'session_distance_mm': float,
+#     ...
+#   }
+# }
+
+# Obtenir uniquement les informations de l'encodeur
+GET /encoder
+
+# Réinitialiser la position de l'encodeur
+POST /encoder/reset
+```
+
+### Test de l'encodeur
+Pour tester l'encodeur manuellement :
+```bash
+cd src
+python3 test_encoder.py
+```
+
+Le script de test permet de :
+- Visualiser la position en temps réel
+- Tester les mouvements avec suivi de distance
+- Réinitialiser la position
+- Configurer la calibration mécanique (mm par impulsion)
+
+Pour vérifier l'état via l'API web :
+```bash
+# État complet
+curl http://localhost:5000/status
+
+# Statistiques de l'encodeur uniquement
+curl http://localhost:5000/encoder
+
+# Réinitialiser la position
+curl -X POST http://localhost:5000/encoder/reset
+```
