@@ -128,21 +128,46 @@ echo ""
 
 # Vérification dépendances Python
 echo -e "${BLUE}=== Dépendances Python ===${NC}\n"
-required_packages=("flask" "requests" "RPi.GPIO")
 echo -e "${YELLOW}Modules Python requis${NC}"
 all_deps_ok=true
-for pkg in "${required_packages[@]}"; do
-    if pip3 show "$pkg" >/dev/null 2>&1; then
-        version=$(pip3 show "$pkg" | grep Version | awk '{print $2}')
-        echo -e "  ${GREEN}✓${NC} $pkg ($version)"
+
+# Vérifier Flask
+if python3 -c "import flask" 2>/dev/null; then
+    version=$(python3 -c "import flask; print(flask.__version__)" 2>/dev/null || echo "?")
+    echo -e "  ${GREEN}✓${NC} flask ($version)"
+else
+    echo -e "  ${RED}✗${NC} flask (manquant)"
+    all_deps_ok=false
+fi
+
+# Vérifier requests
+if python3 -c "import requests" 2>/dev/null; then
+    version=$(python3 -c "import requests; print(requests.__version__)" 2>/dev/null || echo "?")
+    echo -e "  ${GREEN}✓${NC} requests ($version)"
+else
+    echo -e "  ${RED}✗${NC} requests (manquant)"
+    all_deps_ok=false
+fi
+
+# Vérifier RPi.GPIO (peut être fourni par rpi-lgpio sur Raspberry Pi 5)
+if python3 -c "import RPi.GPIO" 2>/dev/null; then
+    # Vérifier si c'est rpi-lgpio (pour Raspberry Pi 5)
+    if python3 -c "import RPi.GPIO; print(RPi.GPIO.__file__)" 2>/dev/null | grep -q lgpio; then
+        version=$(python3 -c "import lgpio; print(lgpio.__version__)" 2>/dev/null || echo "?")
+        echo -e "  ${GREEN}✓${NC} RPi.GPIO via rpi-lgpio ($version) [Raspberry Pi 5]"
     else
-        echo -e "  ${RED}✗${NC} $pkg (manquant)"
-        all_deps_ok=false
+        version=$(python3 -c "import RPi.GPIO; print(RPi.GPIO.VERSION)" 2>/dev/null || echo "?")
+        echo -e "  ${GREEN}✓${NC} RPi.GPIO ($version)"
     fi
-done
+else
+    echo -e "  ${RED}✗${NC} RPi.GPIO (manquant)"
+    echo -e "  ${YELLOW}→${NC} Pour Raspberry Pi 5 : sudo apt install python3-rpi-lgpio"
+    all_deps_ok=false
+fi
 
 if ! $all_deps_ok; then
-    echo -e "\n  ${YELLOW}→${NC} Installer : pip3 install -r /opt/tubpi/requirements.txt"
+    echo -e "\n  ${YELLOW}→${NC} Installer : sudo apt install python3-flask python3-requests python3-rpi-lgpio"
+    echo -e "  ${YELLOW}→${NC} Ou : pip3 install --break-system-packages -r /opt/tubpi/requirements.txt"
 fi
 echo ""
 
