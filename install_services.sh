@@ -85,6 +85,15 @@ else
     echo -e "${YELLOW}Attention : requirements.txt non trouvé${NC}"
 fi
 
+# Rendre les scripts exécutables
+echo -e "${GREEN}Configuration des permissions des scripts...${NC}"
+if [ -f "$PROJECT_DIR/setup_camera_gateway.sh" ]; then
+    chmod +x "$PROJECT_DIR/setup_camera_gateway.sh"
+    echo -e "  ${GREEN}✓${NC} setup_camera_gateway.sh rendu exécutable"
+else
+    echo -e "  ${YELLOW}○${NC} setup_camera_gateway.sh non trouvé"
+fi
+
 # Vérifier les permissions GPIO pour l'utilisateur cible
 echo -e "${GREEN}Configuration des permissions GPIO...${NC}"
 if ! groups "$TARGET_USER" | grep -q gpio; then
