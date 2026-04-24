@@ -1,5 +1,4 @@
 Flask>=2.3
-onvif-zeep>=0.1.14
-opencv-python>=4.8
+requests>=2.0
+# Pour Raspberry Pi 5 - compatible avec RPi.GPIO API
 rpi-lgpio>=0.6
-gpiozero>=1.7.0requests>=2.0

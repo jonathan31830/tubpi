@@ -2,6 +2,8 @@
 
 Ce guide vous permet d'installer et de configurer Tubpi pour qu'il démarre automatiquement au boot.
 
+**Important pour Raspberry Pi 5** : Ce modèle nécessite `rpi-lgpio` au lieu de `RPi.GPIO`. Le script d'installation gère cela automatiquement. Voir [docs/raspberry-pi-5-gpio.md](docs/raspberry-pi-5-gpio.md) pour plus de détails.
+
 ## 🚀 Installation en 3 étapes
 
 ### 1. Préparer le projet

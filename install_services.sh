@@ -69,10 +69,12 @@ if [ -f "$PROJECT_DIR/requirements.txt" ]; then
     # Essayer d'abord les paquets système (recommandé pour Debian/DietPi)
     echo -e "  ${GREEN}→${NC} Tentative d'installation via apt..."
     apt update -qq
-    apt install -y python3-flask python3-requests python3-rpi.gpio 2>&1 | grep -v "already" || true
+    # Note : Pour Raspberry Pi 5, utiliser python3-rpi-lgpio au lieu de python3-rpi.gpio
+    apt install -y python3-flask python3-requests python3-rpi-lgpio 2>&1 | grep -v "already" || true
     
     # Si certains paquets manquent, essayer pip avec --break-system-packages
     echo -e "  ${GREEN}→${NC} Vérification des paquets manquants..."
+    # Pour Raspberry Pi 5, vérifier lgpio (rpi-lgpio fournit l'API RPi.GPIO via lgpio)
     if ! python3 -c "import flask" 2>/dev/null || \
        ! python3 -c "import requests" 2>/dev/null || \
        ! python3 -c "import RPi.GPIO" 2>/dev/null; then
